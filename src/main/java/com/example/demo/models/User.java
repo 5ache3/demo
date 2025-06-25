@@ -1,18 +1,23 @@
 package com.example.demo.models;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import org.hibernate.annotations.JdbcTypeCode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.UUID;
+import java.sql.Types;
 import java.util.Collection;
 
 
 @Entity(name ="Users")
 @Data
 public class User implements UserDetails {
+
     @Id
+    @JdbcTypeCode(Types.VARCHAR)
     private UUID id;
 
     private String name;
@@ -25,11 +30,11 @@ public class User implements UserDetails {
 
     private String imageUrl;
 
-    private String motdepasse;
+    private String password;
 
     private String role;
 
-    private boolean actif = false;
+    private boolean actif = true;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserProject> projects;
@@ -52,9 +57,16 @@ public class User implements UserDetails {
         return java.util.List.of(); // or use role if you want to add authorities
     }
 
+    @PrePersist
+    public void assignId() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+    }
+
     @Override
     public String getPassword() {
-        return motdepasse;
+        return password;
     }
 
     @Override

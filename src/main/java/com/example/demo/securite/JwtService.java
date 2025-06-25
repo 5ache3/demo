@@ -3,6 +3,7 @@ package com.example.demo.securite;
 import com.example.demo.models.Jwt;
 import com.example.demo.models.User;
 import com.example.demo.repositories.JwtRepository;
+import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -15,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.security.Key;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -25,19 +28,37 @@ import java.util.function.Function;
 public class JwtService {
     private static final  String ENCREPTION_KEY="168e23f2978a16ecd8f1618fc54b18ad2c0cc49a9ffb4a702a23687f72f6a057";
     private  final UserService userService ;
+    private final UserRepository userRepository;
     private  final JwtRepository jwtRepository;
-    public Map<String,String > generation(String email){
-        User user = (User) userService.loadUserByUsername(email);
-        Map<String, String> jwtMap = generationJwt(user);
-        Jwt build = Jwt.builder()
-                .expire(false)
-                .desactive(false)
-                .user(user)
-                .token(jwtMap.get("infos:"))
-                .build();
-        jwtRepository.save(build);
-        return  jwtMap ;
+
+
+    public String generateToken(User user) {
+    // Example using io.jsonwebtoken (jjwt) library
+    return Jwts.builder()
+            .setSubject(user.getId().toString())
+            .claim("role", user.getRole())
+            .setIssuedAt(new Date())
+            .setExpiration(Date.from(Instant.now().plus(Duration.ofDays(5))))
+            .signWith(SignatureAlgorithm.HS256, ENCREPTION_KEY)
+            .compact();
+}
+    
+public Map<String, String> generateJwt(String username) {
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+    if (user.getRole() == null) {
+        throw new IllegalStateException("User role is missing for: " + username);
     }
+
+    return Map.of(
+        "token", generateToken(user),
+        "role", String.valueOf(user.getRole()),
+        "id", String.valueOf(user.getId())
+    );
+}
+
+
 
     public  Map<String, String> generationJwt(User user) {
         Map<String, String> name = Map.of(
@@ -49,7 +70,7 @@ public class JwtService {
         String jwtBuilder = Jwts.builder()
                 .setIssuedAt(new Date(l))
                 .setExpiration(new Date(expiration))
-                .setSubject(user.getEmail())
+                .setSubject(user.getId().toString())
                 .setClaims(name)
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();

@@ -19,7 +19,7 @@ public class ProjetsController {
         this.projetService=projetService;
     }
 
-    @GetMapping("/")
+    @GetMapping("/d")
     public List<Project> getAllProjectsForUser(@RequestParam UUID user_id){
          return projetService.findAllForUser(user_id);
     }

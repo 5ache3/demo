@@ -8,10 +8,11 @@ import java.util.List;
 import java.util.UUID;
 
 
-@Entity(name = "Projet")
+@Entity(name = "Project")
 @Data
 public class Project {
     @Id
+    @GeneratedValue
     private UUID id;
 
     private String title;

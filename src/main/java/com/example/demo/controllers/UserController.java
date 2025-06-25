@@ -18,7 +18,7 @@ import java.util.UUID;
 
 
 @RestController
-@RequestMapping("/securite")
+@RequestMapping("/")
 public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     final  private UserService userService;
@@ -29,16 +29,14 @@ public class UserController {
         this.userService=userService;
         this.authenticationManager=authenticationManager;
     }
-    @PostMapping("/ins")
+
+    @PostMapping("auth/sign-up")
     public ResponseEntity<String> inscription( @RequestBody User user ){
-         try {
-             userService.signup(user);
-             return new ResponseEntity<>(HttpStatus.CREATED);
-         } catch (IllegalArgumentException e) {
-             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-         }
+        userService.signup(user);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
-    @PostMapping("/activation/{code}/{userid}")
+
+    @PostMapping("auth/activation/{code}/{userid}")
     public  ResponseEntity<String> valider(@PathVariable String code , @PathVariable UUID userid){
         if(userService.validate(code ,userid)){
             return new ResponseEntity<>("ACTIVE",HttpStatus.OK);
@@ -46,18 +44,20 @@ public class UserController {
             return new ResponseEntity<>("Not active",HttpStatus.BAD_REQUEST);
         }
     }
-    @PostMapping("/connexion")
-    public Map<String,String> connexion(@RequestBody AuthentificationDTO authentificationDTO){
+    @PostMapping("auth/sign-in")
+    public Map<String,String> logingIn(@RequestBody  User user){
+        log.info("loging in username:{} password: {}",user.getUsername(),user.getPassword());
         Authentication authenticate = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authentificationDTO.username(),authentificationDTO.password())
+                new UsernamePasswordAuthenticationToken(user.getUsername(),user.getPassword())
         );
         if(authenticate.isAuthenticated()) {
-            return jwtService.generation(authentificationDTO.username());
+            return jwtService.generateJwt(user.getUsername());
         }else{
             return  null;
         }
     }
-    @PostMapping("/deconnexion")
+    
+    @PostMapping("auth/log-out")
     public void deconnexion(){
         jwtService.deconnexion();
     }
