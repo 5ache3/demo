@@ -9,8 +9,12 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserProjectRepository extends JpaRepository<UserProject, UUID> {
+
+    /* look‑ups */
     List<UserProject> findByUser(User user);
     List<UserProject> findByProject(Project project);
     UserProject findByUserAndProject(User user, Project project);
     boolean existsByUserAndProject(User user, Project project);
-} 
+    
+    void deleteByUserAndProject(User user, Project project);
+}

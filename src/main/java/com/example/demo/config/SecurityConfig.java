@@ -33,7 +33,8 @@ public class SecurityConfig {
                 // 👇 Allow frontend requests to auth endpoints
                 .requestMatchers(HttpMethod.POST, "/**").permitAll()
                 .requestMatchers("/activation/**", "/connexion", "/deconnexion").permitAll()
-
+                .requestMatchers(HttpMethod.DELETE, "/**").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/**").permitAll()
                 // 👇 Require auth for everything else
                 .anyRequest().authenticated()
             );

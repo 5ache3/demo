@@ -16,12 +16,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor      // generates constructor for final fields
 public class ProjetService {
     final  private UserService userService;
-    private final ProjetsRepository projetsRepository;
+    private final ProjetsRepository projectRepository;
+    private final UserRepository userRepository;
     private final UserProjectRepository userProjectRepository;
 
     public Optional<Project> findById(UUID p_id){
-        return projetsRepository.findById(p_id);
+        return projectRepository.findById(p_id);
     }
+
 
     public List<User> findMembers(UUID projectId) {
         Optional<Project> projectOpt = findById(projectId);
@@ -42,7 +44,7 @@ public class ProjetService {
         User userRef = new User();
         userRef.setId(userId);
 
-        List<Project> owned   = projetsRepository.findByOwner(userRef);
+        List<Project> owned   = projectRepository.findByOwner(userRef);
         List<Project> member  = userProjectRepository.findByUser(userRef)
                                                      .stream()
                                                      .map(UserProject::getProject)
@@ -59,7 +61,7 @@ public class ProjetService {
     public List<Project> findOwned(UUID userId) {
         User owner = new User();
         owner.setId(userId);
-        return projetsRepository.findByOwner(owner);
+        return projectRepository.findByOwner(owner);
     }
 
     /** Projects where the user is *only* a member (not owner) */
@@ -76,7 +78,7 @@ public class ProjetService {
 
     @Transactional
     public Project save(Project projet) {
-        Project saved = projetsRepository.save(projet);
+        Project saved = projectRepository.save(projet);
         UUID ownerUuid = UUID.fromString(projet.getOwnerId());
         userService.findById(ownerUuid)                      
           .ifPresent(owner -> {                      
@@ -88,7 +90,7 @@ public class ProjetService {
 
     @Transactional
     public void addMembers(UUID projectId, List<User> members) {
-        Project project = projetsRepository.findById(projectId)
+        Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException("Projet introuvable"));
 
         for (User member : members) {
@@ -106,15 +108,15 @@ public class ProjetService {
     @Transactional
     public void deleteAllOwnedByUser(UUID ownerId) {
         User owner = new User(); owner.setId(ownerId);
-        projetsRepository.deleteAll(projetsRepository.findByOwner(owner));
+        projectRepository.deleteAll(projectRepository.findByOwner(owner));
     }
 
     @Transactional
     public boolean deleteById(UUID projectId) {
-        if (!projetsRepository.existsById(projectId)) {
+        if (!projectRepository.existsById(projectId)) {
             throw new EntityNotFoundException("Projet introuvable");
         }
-        projetsRepository.deleteById(projectId);
+        projectRepository.deleteById(projectId);
         return true;
     }
 
@@ -131,7 +133,7 @@ public class ProjetService {
     }
 
     private Project fetch(UUID id) {
-        return projetsRepository.findById(id)
+        return projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Projet introuvable"));
     }
 

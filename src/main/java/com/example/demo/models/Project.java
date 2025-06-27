@@ -48,8 +48,7 @@ public class Project {
       2. User-Project links
     ─────────────────────────────*/
     @OneToMany(mappedBy = "project",
-               cascade = CascadeType.ALL,
-               fetch   = FetchType.LAZY)
+               fetch   = FetchType.LAZY,cascade = {CascadeType.MERGE, CascadeType.REFRESH}, orphanRemoval = false)
     @com.fasterxml.jackson.annotation.JsonIgnore
     private List<UserProject> users;
 

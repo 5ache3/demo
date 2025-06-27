@@ -21,18 +21,18 @@ public class TachesService{
          this.tachesRepository=tachesRepository;
          this.userTaskRepository=userTaskRepository;
      }
-     public void ajouterService(Task taches){
-         tachesRepository.save(taches);
+     public Task ajouterService(Task taches){
+         return tachesRepository.save(taches);
      }
-    //  public boolean  modifierService(Task taches){
-    //      Optional<Task> optional=tachesRepository.findByTask(taches.getId());
-    //      if(optional.isPresent()){
-    //          tachesRepository.save(taches);
-    //          return true;
-    //      }else {
-    //          return false;
-    //      }
-    //  }
+    public boolean update(UUID id,Task taches){
+        Optional<Task> optional=tachesRepository.findById(id);
+        if(optional.isPresent()){
+            tachesRepository.save(taches);
+            return true;
+        }else {
+            return false;
+        }
+    }
      
      public boolean ajouterMembresService(List<User> membres, UUID tache_id){
          Optional<Task> optional=tachesRepository.findById(tache_id);

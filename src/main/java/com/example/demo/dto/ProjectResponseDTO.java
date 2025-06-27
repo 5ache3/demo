@@ -16,6 +16,7 @@ public class ProjectResponseDTO {
     private LocalDateTime createdAt;
     private String description;
     private LocalDateTime deadline;
+    private List<Task> tasks;
     private int t;   // number of tasks
     private int c;   // number of comments (or whatever “c” means)
 
@@ -30,6 +31,7 @@ public class ProjectResponseDTO {
     this.createdAt   = project.getCreatedAt();
     this.description = project.getDescription();
     this.deadline    = project.getDeadline();
+    this.tasks    = project.getTasks();
 
     /* total tasks */
     this.t = project.getTasks() != null ? project.getTasks().size() : 0;
@@ -67,4 +69,5 @@ public class ProjectResponseDTO {
     public int getT()               { return t; }
     public int getC()               { return c; }
     public List<UserBasicDTO> getMembers() { return members; }
+    public List<Task> getTasks() { return tasks;}
 }
