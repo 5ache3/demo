@@ -6,13 +6,15 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.List;
 import java.util.UUID;
 import java.sql.Types;
 import java.util.Collection;
 
 
-@Entity(name ="Users")
+@Entity(name ="User")
 @Data
 public class User implements UserDetails {
 
@@ -22,75 +24,67 @@ public class User implements UserDetails {
 
     private String name;
 
-    @Column(unique = true)
-    private String username;
-
-    @Column(unique = true)
-    private String email;
+    @Column(unique = true) private String username;
+    @Column(unique = true) private String email;
 
     private String imageUrl;
-
     private String password;
-
     private String role;
-
     private boolean actif = true;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    /* ───────────────────────────
+       Collections — LAZY + @JsonIgnore
+    ─────────────────────────── */
+
+    @OneToMany(mappedBy = "user",
+               cascade = CascadeType.ALL,
+               fetch   = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<UserProject> projects;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user",
+               cascade = CascadeType.ALL,
+               fetch   = FetchType.LAZY)
+    @JsonIgnore
     private List<UserTask> tasks;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "owner",
+               cascade = CascadeType.ALL,
+               fetch   = FetchType.LAZY)
+    @JsonIgnore
     private List<Project> ownedProjects;
 
-    @OneToMany(mappedBy = "destinataire", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "destinataire",
+               cascade = CascadeType.ALL,
+               fetch   = FetchType.LAZY)
+    @JsonIgnore
     private List<Notifications> receivedNotifications;
 
-    @OneToMany(mappedBy = "proprietaire", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "proprietaire",
+               cascade = CascadeType.ALL,
+               fetch   = FetchType.LAZY)
+    @JsonIgnore
     private List<Notifications> sentNotifications;
 
-    // UserDetails implementation
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return java.util.List.of(); // or use role if you want to add authorities
-    }
-
+    /* ───────────────────────────
+       Utility
+    ─────────────────────────── */
     @PrePersist
     public void assignId() {
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
+        if (id == null) id = UUID.randomUUID();
     }
 
+    /* ───────────────────────────
+       UserDetails implementation
+    ─────────────────────────── */
     @Override
-    public String getPassword() {
-        return password;
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return java.util.List.of();               // or derive from `role`
     }
-
-    @Override
-    public String getUsername() {
-        return username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return actif;
-    }
+    @Override public String  getPassword()               { return password; }
+    @Override public String  getUsername()               { return username; }
+    @Override public boolean isAccountNonExpired()       { return true; }
+    @Override public boolean isAccountNonLocked()        { return true; }
+    @Override public boolean isCredentialsNonExpired()   { return true; }
+    @Override public boolean isEnabled()                 { return actif; }
 }

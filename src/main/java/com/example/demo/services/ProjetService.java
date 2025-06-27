@@ -3,6 +3,7 @@ package com.example.demo.services;
 import com.example.demo.models.*;
 import com.example.demo.repositories.ProjetsRepository;
 import com.example.demo.repositories.UserProjectRepository;
+import com.example.demo.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -14,24 +15,28 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor      // generates constructor for final fields
 public class ProjetService {
-
+    final  private UserService userService;
     private final ProjetsRepository projetsRepository;
     private final UserProjectRepository userProjectRepository;
 
-    public List<User> findMembers(UUID projectId) {
-    Optional<Project> projectOptional = projetsRepository.findById(projectId);
-    
-    if (projectOptional.isEmpty()) {
-        return List.of(); // or throw an exception
+    public Optional<Project> findById(UUID p_id){
+        return projetsRepository.findById(p_id);
     }
 
-    Project project = projectOptional.get();
-    List<UserProject> userProjects = userProjectRepository.findByProject(project);
+    public List<User> findMembers(UUID projectId) {
+        Optional<Project> projectOpt = findById(projectId);
 
-    return userProjects.stream()
-        .map(UserProject::getUser)
-        .toList();
-}
+        if (projectOpt.isEmpty()) {
+            return List.of(); // or throw an exception
+        }
+        Project project = projectOpt.get();
+        List<UserProject> userProjects = userProjectRepository.findByProject(project);
+
+        return userProjects.stream()
+                .map(UserProject::getUser)
+                .filter(Objects::nonNull)
+                .toList();
+    }
     @Transactional
     public List<Project> findAllForUser(UUID userId) {
         User userRef = new User();
@@ -71,7 +76,14 @@ public class ProjetService {
 
     @Transactional
     public Project save(Project projet) {
-        return projetsRepository.save(projet);
+        Project saved = projetsRepository.save(projet);
+        UUID ownerUuid = UUID.fromString(projet.getOwnerId());
+        userService.findById(ownerUuid)                      
+          .ifPresent(owner -> {                      
+              UserProject link = new UserProject(owner, saved, "CREATOR");
+              userProjectRepository.save(link);
+          });
+        return saved;
     }
 
     @Transactional

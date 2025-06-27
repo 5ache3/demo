@@ -1,71 +1,45 @@
 package com.example.demo.controllers;
-
-import com.example.demo.dto.AuthentificationDTO;
+import com.example.demo.dto.UserBasicDTO;
+import com.example.demo.models.Project;
 import com.example.demo.models.User;
-import com.example.demo.securite.JwtService;
+import com.example.demo.services.ProjetService;
 import com.example.demo.services.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api")
 public class UserController {
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     final  private UserService userService;
-    final  private AuthenticationManager authenticationManager ;
-    final  private JwtService jwtService;
-    public  UserController(UserService userService  ,AuthenticationManager authenticationManager,JwtService jwtService){
-        this.jwtService=jwtService;
+    final  private ProjetService projectService;
+    public  UserController(UserService userService,ProjetService projectService){
         this.userService=userService;
-        this.authenticationManager=authenticationManager;
+        this.projectService=projectService;
     }
 
-    @PostMapping("auth/sign-up")
-    public ResponseEntity<String> inscription( @RequestBody User user ){
-        userService.signup(user);
-        return new ResponseEntity<>(HttpStatus.CREATED);
-    }
-
-    @PostMapping("auth/activation/{code}/{userid}")
-    public  ResponseEntity<String> valider(@PathVariable String code , @PathVariable UUID userid){
-        if(userService.validate(code ,userid)){
-            return new ResponseEntity<>("ACTIVE",HttpStatus.OK);
-        }else {
-            return new ResponseEntity<>("Not active",HttpStatus.BAD_REQUEST);
-        }
-    }
-    @PostMapping("auth/sign-in")
-    public Map<String,String> logingIn(@RequestBody  User user){
-        log.info("loging in username:{} password: {}",user.getUsername(),user.getPassword());
-        Authentication authenticate = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(),user.getPassword())
-        );
-        if(authenticate.isAuthenticated()) {
-            return jwtService.generateJwt(user.getUsername());
-        }else{
-            return  null;
-        }
-    }
     
-    @PostMapping("auth/log-out")
-    public void deconnexion(){
-        jwtService.deconnexion();
-    }
-    @GetMapping("/user/{id}")
-    public ResponseEntity<User> getUserWithProjectsAndTasks(@PathVariable UUID id) {
+    @GetMapping("/user/{id}/info")
+    public ResponseEntity<UserBasicDTO> getUser(@PathVariable UUID id) {
         try {
-            User user = userService.getUserWithProjectsAndTasks(id);
-            return new ResponseEntity<>(user, HttpStatus.OK);
+            User user=userService.getUser(id); 
+            return new ResponseEntity<>(new UserBasicDTO(user), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    @GetMapping("/user/{id}/projects")
+    public ResponseEntity<List<Project>> getUserProjects(@PathVariable UUID id) {
+        try {
+            List<Project> projects=projectService.findAllForUser(id); 
+            for(Project project : projects){
+                project.setT(project.getTasks().size());
+            }
+            return new ResponseEntity<>(projects, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

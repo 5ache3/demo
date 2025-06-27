@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -73,15 +74,15 @@ public class UserService implements UserDetailsService {
 
     // ───────────────  Fetch user + projects + tasks  ───────────────
     @Transactional(readOnly = true)
-    public User getUserWithProjectsAndTasks(UUID userId) {
+    public User getUser(UUID userId) {
         User user = usersRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         List<UserProject> userProjects = userProjectRepository.findByUser(user);
-        List<UserTask> userTasks = userTaskRepository.findByUser(user);
+        // List<UserTask> userTasks = userTaskRepository.findByUser(user);
 
-        user.setProjects(userProjects);
-        user.setTasks(userTasks);
+        // user.setProjects(userProjects);
+        // user.setTasks(userTasks);
 
         return user;
     }
@@ -90,5 +91,8 @@ public class UserService implements UserDetailsService {
     usersRepository.save(user);
 }
 
+    public Optional<User> findById(UUID id){
+        return usersRepository.findById(id);
+    }
 
 }

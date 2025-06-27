@@ -1,14 +1,18 @@
 package com.example.demo.controllers;
 
 
+import com.example.demo.dto.ProjectResponseDTO;
 import com.example.demo.models.Project;
 import com.example.demo.models.User;
+import com.example.demo.models.UserProject;
+import com.example.demo.repositories.UserProjectRepository;
 import com.example.demo.services.ProjetService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -19,16 +23,28 @@ public class ProjetsController {
         this.projetService=projetService;
     }
 
-    @GetMapping("/d")
-    public List<Project> getAllProjectsForUser(@RequestParam UUID user_id){
-         return projetService.findAllForUser(user_id);
-    }
+    
 
     @PostMapping("/")
     public ResponseEntity<Project> createProject(@RequestBody Project project) {
         Project saved = projetService.save(project);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
+
+
+   @GetMapping("/{id}")
+    public ResponseEntity<ProjectResponseDTO> getProject(@PathVariable UUID id) {
+        Optional<Project> projectOpt = projetService.findById(id);
+
+        if (projectOpt.isPresent()) {
+            Project project = projectOpt.get();
+            List<User> members = projetService.findMembers(id);
+            return new ResponseEntity<>(new ProjectResponseDTO(project, members), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 
     @GetMapping("/owned")
     public List<Project> getOwnedProjects(@RequestParam UUID user_id){
