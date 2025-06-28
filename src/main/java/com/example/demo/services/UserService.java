@@ -40,7 +40,6 @@ public class UserService implements UserDetailsService {
 
     // ───────────────────────  Sign‑up  ───────────────────────
     public User signup(User user) {
-        log.info("username {}",user.getUsername());
         usersRepository.findByUsername(user.getUsername())
                 .ifPresent(u -> { throw new IllegalArgumentException("Le nom est déjà utilisé"); });
         if(user.getEmail()!=null){
