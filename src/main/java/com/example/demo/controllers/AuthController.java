@@ -23,30 +23,59 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/")
+@Data
 public class AuthController {
     final  private UserService userService;
     final  private AuthenticationManager authenticationManager ;
     final  private JwtService jwtService;
-    public  AuthController(UserService userService  ,AuthenticationManager authenticationManager,JwtService jwtService){
-        this.jwtService=jwtService;
-        this.userService=userService;
-        this.authenticationManager=authenticationManager;
-    }
+    private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final ValidationService validationService;
 
     @PostMapping("auth/sign-up")
     public ResponseEntity<String> inscription( @RequestBody User user ){
-        userService.signup(user);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+
+    if (user.getEmail() != null && userRepository.findByEmail(user.getEmail()).isPresent()) {
+        return new ResponseEntity<>("Email déjà utilisé", HttpStatus.CONFLICT); 
     }
 
-    @PostMapping("auth/activation/{code}/{userid}")
-    public  ResponseEntity<String> valider(@PathVariable String code , @PathVariable UUID userid){
-        if(userService.validate(code ,userid)){
-            return new ResponseEntity<>("ACTIVE",HttpStatus.OK);
-        }else {
-            return new ResponseEntity<>("Not active",HttpStatus.BAD_REQUEST);
-        }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole("USER");
+        User saved = userRepository.save(user);
+
+        // validationService.valider(saved);
+        return  ResponseEntity
+               .status(HttpStatus.CREATED)
+               .body(saved.getId().toString());
     }
+
+    @PostMapping("/onboarding/{id}")
+    public ResponseEntity<String> onboarding(
+            @PathVariable UUID id,
+            @RequestBody OnBoardingDTO dto) {
+
+        // 1.  fetch the same user
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+                          HttpStatus.NOT_FOUND, "User not found"));
+
+        // 2.  store the onboarding fields
+        user.setName(dto.getName());
+        user.setImageUrl(dto.getImageUrl());
+        
+        if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
+        return new ResponseEntity<>("Nom d'utilisateur déjà utilisé", HttpStatus.CONFLICT);
+        }
+        user.setUsername(dto.username);
+
+        userRepository.save(user);
+        validationService.valider(user);     
+        user.setActif(true);
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Onboarding completed");
+    }
+
     @PostMapping("auth/sign-in")
     public Map<String,String> logingIn(@RequestBody  User user){
         Authentication authenticate = authenticationManager.authenticate(
