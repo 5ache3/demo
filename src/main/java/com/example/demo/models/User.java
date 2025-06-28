@@ -7,13 +7,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
 import java.util.UUID;
 import java.sql.Types;
 import java.util.Collection;
 
-
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity(name ="User")
 @Data
 public class User implements UserDetails {

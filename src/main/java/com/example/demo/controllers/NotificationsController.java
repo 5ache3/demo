@@ -1,7 +1,19 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dto.NotificationResponseDTO;
+import com.example.demo.models.NotificationType;
 import com.example.demo.models.Notifications;
+import com.example.demo.models.Project;
+import com.example.demo.models.User;
+import com.example.demo.repositories.ProjetsRepository;
+import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.NotificationsService;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,51 +22,77 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/notifications")
+@RequiredArgsConstructor
+@RequestMapping("/api/notifications")
 public class NotificationsController {
     final private NotificationsService notificationsService;
-    public NotificationsController(NotificationsService notificationsService){
-      this.notificationsService=notificationsService;
+    final private UserRepository userRepository;
+    final private ProjetsRepository projectRepository;
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-  }
-  @PostMapping("/envoiyer")
-  public ResponseEntity<String> envoiyer(@RequestBody Notifications notifications){
-      notificationsService.envoiyerService(notifications);
-      return new ResponseEntity<>(HttpStatus.CREATED);
-  }
-  @GetMapping("/afficher")
-  public List<Notifications> afficher(@RequestParam UUID destinataire_id){
-      return notificationsService.afficherService(destinataire_id);
-    }
-  @GetMapping("/dernier")
-  public Notifications dernier(@RequestParam UUID destinataire_id){
-      return  notificationsService.dernierService(destinataire_id);
-  }
-  @PutMapping("/{notificationId}/lire")
-  public ResponseEntity<String> lire(@PathVariable UUID notificationId){
-      if(notificationsService.lireService(notificationId)){
-          return new ResponseEntity<>(HttpStatus.OK);
-      }else {
-          return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
-  }
-  @DeleteMapping("/suprimer/{notificationId}")
-  public  ResponseEntity<String> suprimer (@PathVariable UUID notificationId ){
-      if(notificationsService.suprimerService(notificationId)) {
-          return new ResponseEntity<>(HttpStatus.OK);
-      }else {
-          return  new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
-  }
-  @GetMapping("/affichernonlue")
-  public  List<Notifications> afficherNonLue(@RequestParam UUID user_id){
-        return notificationsService.afficherNonLueService(user_id);
-  }
-  @DeleteMapping("/suprimerTous")
-  public  ResponseEntity<String> suprimerTous(@RequestParam UUID destinataire_id){
-      notificationsService.suprimerTousService(destinataire_id);
+  
+  @PostMapping("/{id}/read")
+  public ResponseEntity<String> read(@PathVariable UUID id){
+      notificationsService.lireService(id);
       return new ResponseEntity<>(HttpStatus.OK);
   }
+
+  @PostMapping("/{id}/aprove")
+  public ResponseEntity<String> aprove(@PathVariable UUID id){
+      notificationsService.approve(id);
+      notificationsService.lireService(id);
+      return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @PostMapping("/{id}/reject")
+  public ResponseEntity<String> reject(@PathVariable UUID id){
+      notificationsService.reject(id);
+      notificationsService.lireService(id);
+
+      return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @DeleteMapping("/{id}/delete")
+  public ResponseEntity<String> delete(@PathVariable UUID id){
+      notificationsService.suprimerService(id);
+      return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @GetMapping("user/{id}")
+  public List<Notifications> getUsersNotifications(@PathVariable UUID id){
+    return notificationsService.afficherService(id);
+  }
+
+  @PostMapping("project/{p_id}")
+  public List<Notifications> getProjectNotifications(@PathVariable UUID p_id,@RequestBody UUID u_id){
+    log.info("user_id {} project_id : {}",p_id,u_id);
+    return notificationsService.ProjetEtDestNotifications(p_id, u_id);
+  }
+  @GetMapping("project/{p_id}/{u_id}")
+  public List<Notifications> getProjectNotificationss(@PathVariable UUID p_id,@PathVariable UUID u_id){
+    log.info("user_id {} project_id : {}",p_id,u_id);
+    return notificationsService.ProjetEtDestNotifications(p_id, u_id);
+  }
+
+@PostMapping("/send")
+public ResponseEntity<String> sendNotification(@RequestBody NotificationResponseDTO data) {
+    Notifications notif = new Notifications();
+    
+    notif.setDestinataireId(data.destinateur_id.toString());
+    notif.setProprietaireId(data.sender_id.toString());
+    notif.setProjectId(data.project_id.toString()); 
+    notif.setMessage(data.message);
+    notif.setTitle(data.title);
+    if(data.type.equals("REQUEST")){
+      notif.setNotificationType(NotificationType.REQUEST);
+    }else{
+      notif.setNotificationType(NotificationType.GENERAL);
+    }
+
+    notificationsService.envoiyerService(notif);
+    return new ResponseEntity<>(HttpStatus.CREATED);
+}
+
 
 
 

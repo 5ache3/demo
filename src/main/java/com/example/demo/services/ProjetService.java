@@ -78,15 +78,21 @@ public class ProjetService {
 
     @Transactional
     public Project save(Project projet) {
-        Project saved = projectRepository.save(projet);
-        UUID ownerUuid = UUID.fromString(projet.getOwnerId());
-        userService.findById(ownerUuid)                      
-          .ifPresent(owner -> {                      
-              UserProject link = new UserProject(owner, saved, "CREATOR");
-              userProjectRepository.save(link);
-          });
+        boolean isNew = projet.getId() == null;         
+        Project saved  = projectRepository.save(projet);
+
+        if (isNew) {                                    
+            UUID ownerUuid = UUID.fromString(projet.getOwnerId());
+            userService.findById(ownerUuid).ifPresent(owner -> {
+                if (!userProjectRepository.existsByUserAndProject(owner, saved)) {
+                    userProjectRepository.save(
+                        new UserProject(owner, saved, "CREATOR"));
+                }
+            });
+        }
         return saved;
     }
+
 
     @Transactional
     public void addMembers(UUID projectId, List<User> members) {

@@ -3,6 +3,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.dto.ProjectResponseDTO;
 import com.example.demo.dto.UserProjectRelDTO;
+import com.example.demo.dto.ProjectUpdateDTO;
 import com.example.demo.models.Project;
 import com.example.demo.models.Task;
 import com.example.demo.models.User;
@@ -44,8 +45,7 @@ public class ProjetsController {
     }
 
     @PutMapping("/{id}/edit")
-    public ResponseEntity<Project> updateProject(@PathVariable UUID id, @RequestBody Project projectBody) {
-
+    public ResponseEntity<Project> updateProject(@PathVariable UUID id, @RequestBody ProjectUpdateDTO dto) {
         Optional<Project> existingOpt = projetService.findById(id);
         if (existingOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -53,11 +53,9 @@ public class ProjetsController {
 
         Project existing = existingOpt.get();
 
-        existing.setTitle(projectBody.getTitle());
-        existing.setDescription(projectBody.getDescription());
-        existing.setDeadline(projectBody.getDeadline());
-
-        // DO NOT touch existing.getUsers() or userProjects collection here
+        existing.setTitle(dto.getTitle());
+        existing.setDescription(dto.getDescription());
+        existing.setDeadline(dto.getDeadline());
 
         Project updated = projetService.save(existing);
 

@@ -55,7 +55,7 @@ public class Project {
     /*─────────────────────────────
       3. Notifications
     ─────────────────────────────*/
-    @OneToMany(mappedBy = "projet",  // fixed: should match Notifications.java
+    @OneToMany(mappedBy = "project",  // fixed: should match Notifications.java
                cascade = CascadeType.ALL,
                fetch   = FetchType.LAZY)
     @JsonIgnore
