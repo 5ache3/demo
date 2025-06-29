@@ -58,7 +58,10 @@ public Map<String, String> generateJwt(String username) {
     );
 }
 
-
+private static Key getKey() {
+    byte[] decode = Decoders.BASE64.decode(ENCREPTION_KEY);
+    return Keys.hmacShaKeyFor(decode);
+}
 
     public  Map<String, String> generationJwt(User user) {
         Map<String, String> name = Map.of(
@@ -77,13 +80,10 @@ public Map<String, String> generateJwt(String username) {
         return Map.of("infos:",jwtBuilder);
     }
 
-    private static Key getKey() {
-        byte[] decode = Decoders.BASE64.decode(ENCREPTION_KEY);
-        return Keys.hmacShaKeyFor(decode);
-    }
     public  String extraireEmail(String token){
         return  this.getClaims(token,Claims::getSubject) ;
     }
+    
     public  boolean isTokenExprired(String token){
         Date expirationDate=this.getClaims(token,Claims::getExpiration);
         if(expirationDate==null){

@@ -1,6 +1,7 @@
 package com.example.demo.controllers;
 import com.example.demo.dto.UserBasicDTO;
 import com.example.demo.models.Project;
+import com.example.demo.models.Task;
 import com.example.demo.models.User;
 import com.example.demo.services.ProjetService;
 import com.example.demo.services.UserService;
@@ -37,7 +38,15 @@ public class UserController {
         try {
             List<Project> projects=projectService.findAllForUser(id); 
             for(Project project : projects){
-                project.setT(project.getTasks().size());
+                int total = project.getTasks() == null ? 0 : project.getTasks().size();
+                project.setT(total);
+
+                int completed = 0;
+                if (project.getTasks() != null) {
+                    completed = (int) project.getTasks().stream().filter(Task::isCompleted).count();
+                }
+                project.setC(completed);
+                project.setTasks(null);
             }
             return new ResponseEntity<>(projects, HttpStatus.OK);
         } catch (Exception e) {
